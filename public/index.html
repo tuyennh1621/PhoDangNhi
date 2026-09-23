@@ -4,16 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Phở Bò Đăng Nhi · POS</title>
+<link rel="icon" type="image/png" href="/logo.png">
 <style>
 :root{--brown:#352016;--brown2:#5d392a;--gold:#efa653;--cream:#fff8f2;--line:#eddcd0;--green:#197652;--red:#b54835;--muted:#80695d}
 *{box-sizing:border-box}body{margin:0;background:var(--cream);color:#342018;font:15px system-ui,-apple-system,Segoe UI,sans-serif}
 button,input,select,textarea{font:inherit}button{cursor:pointer}
-.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}.app>aside,.app>main{min-width:0}
 aside{background:var(--brown);color:#f8e3d0;padding:22px 16px;position:sticky;top:0;height:100vh}
 .brand{font-size:23px;font-weight:800;padding:0 8px}.brand b{color:var(--gold)}
 nav{margin-top:26px;display:grid;gap:6px}nav button{border:0;border-radius:9px;padding:11px 12px;background:none;color:#ead0bc;text-align:left}
 nav button.active,nav button:hover{background:var(--brown2);color:#fff}
 .nav-sep{height:1px;background:#624535;margin:10px 8px}
+.accountBox{display:grid;gap:8px}.accountBox #userBox{padding:0 8px;color:#dbbfa9}.accountBox button{width:100%}
 main{padding:24px;max-width:1500px;width:100%;margin:auto}.view{display:none}.view.active{display:block}
 h1,h2,h3{margin-top:0}.hint{color:var(--muted)}.topbar{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:18px}
 .grid{display:grid;gap:14px}.tables{grid-template-columns:repeat(auto-fill,minmax(155px,1fr))}
@@ -41,14 +43,14 @@ h1,h2,h3{margin-top:0}.hint{color:var(--muted)}.topbar{display:flex;justify-cont
 .empty{padding:35px;text-align:center;color:var(--muted)}
 .toast{position:fixed;right:20px;bottom:20px;background:#493024;color:#fff;padding:13px 17px;border-radius:8px;display:none;z-index:30}.toast.show{display:block}
 .tabs{display:flex;gap:5px;margin-bottom:15px}.tabs button{padding:8px 12px;border:1px solid var(--line);background:#fff;border-radius:7px}.tabs button.active{background:var(--brown);color:#fff}
-@media(max-width:900px){.app{grid-template-columns:1fr}aside{height:auto;position:static;padding:12px;display:flex;align-items:center;gap:12px}.brand{white-space:nowrap}nav{margin:0;display:flex;overflow:auto}nav button{white-space:nowrap}.nav-sep{display:none}.pos{grid-template-columns:1fr}.order{position:static}.stats{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){main{padding:14px}.stats{grid-template-columns:1fr 1fr}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.tables{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.app{grid-template-columns:1fr}aside{height:auto;position:static;padding:12px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}.brand{white-space:nowrap}nav{margin:0;display:flex;overflow:auto}nav button{white-space:nowrap}.nav-sep{display:none}.accountBox{display:flex;flex-direction:row;align-items:center;gap:8px;margin-left:auto}.accountBox #userBox{padding:0;white-space:nowrap}.accountBox button{width:auto;white-space:nowrap}.pos{grid-template-columns:1fr}.order{position:static}.stats{grid-template-columns:repeat(2,1fr)}.topbar{flex-wrap:wrap}}
+@media(max-width:560px){main{padding:14px}.stats{grid-template-columns:1fr 1fr}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.tables{grid-template-columns:1fr 1fr}.accountBox{margin-left:0;width:100%;justify-content:space-between}.accountBox #userBox{display:none}}
 </style>
 </head>
 <body>
-<div id="loginScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--brown)">
+<div id="loginScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--brown);padding:20px">
   <div class="modalbox" style="max-width:340px;width:100%">
-    <div class="brand" style="color:#342018;margin-bottom:6px">Phở <b style="color:#d97434">Bò</b></div>
+    <div class="brand" style="margin-bottom:6px"><img src="/logo.png" alt="Phở Bò Đăng Nhi" style="height:70px"></div>
     <p class="hint" style="margin-top:0">Đăng nhập để sử dụng hệ thống</p>
     <div class="field" style="margin-bottom:12px"><label>Tài khoản</label><input id="loginUsername" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="field"><label>Mật khẩu</label><input id="loginPassword" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
@@ -58,7 +60,7 @@ h1,h2,h3{margin-top:0}.hint{color:var(--muted)}.topbar{display:flex;justify-cont
 </div>
 <div class="app" id="appRoot" style="display:none">
 <aside>
-  <div class="brand">Phở <b>Bò</b></div>
+  <div class="brand"><img src="/logo.png" alt="Phở Bò Đăng Nhi" style="height:52px;display:block"></div>
   <nav>
     <button class="active" onclick="go('tables',this)">🪑 Sơ đồ bàn</button>
     <button onclick="go('pos',this)">🧾 Order món</button>
@@ -72,9 +74,11 @@ h1,h2,h3{margin-top:0}.hint{color:var(--muted)}.topbar{display:flex;justify-cont
     <button data-admin="1" onclick="go('expenseAdmin',this)">💸 Chi phí cố định</button>
   </nav>
   <div class="nav-sep"></div>
-  <div id="userBox" class="small" style="padding:0 8px;color:#dbbfa9"></div>
-  <button class="btn" style="width:100%;margin-top:8px" onclick="openChangePasswordModal()">🔑 Đổi mật khẩu</button>
-  <button class="btn" style="width:100%;margin-top:8px" onclick="doLogout()">↪ Đăng xuất</button>
+  <div class="accountBox">
+    <div id="userBox" class="small"></div>
+    <button class="btn" onclick="openChangePasswordModal()">🔑 Đổi mật khẩu</button>
+    <button class="btn" onclick="doLogout()">↪ Đăng xuất</button>
+  </div>
 </aside>
 <main>
 <section id="tables" class="view active">
