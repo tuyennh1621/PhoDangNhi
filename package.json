@@ -1,9 +1,20 @@
 {
-  "name":"pho-bo-dang-nhi-pos",
-  "version":"1.0.0",
-  "private":true,
-  "type":"module",
-  "engines":{"node":"20.x"},
-  "scripts":{"start":"node server.js","dev":"node --watch server.js"},
-  "dependencies":{"dotenv":"^16.4.7","express":"^5.1.0","mongodb":"^6.20.0"}
+  "name": "pho-bo-dang-nhi-pos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "connect-mongo": "^6.0.0",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "express-session": "^1.19.0",
+    "mongodb": "^6.20.0"
+  }
 }

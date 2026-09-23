@@ -46,7 +46,17 @@ h1,h2,h3{margin-top:0}.hint{color:var(--muted)}.topbar{display:flex;justify-cont
 </style>
 </head>
 <body>
-<div class="app">
+<div id="loginScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--brown)">
+  <div class="modalbox" style="max-width:340px;width:100%">
+    <div class="brand" style="color:#342018;margin-bottom:6px">Phở <b style="color:#d97434">Bò</b></div>
+    <p class="hint" style="margin-top:0">Đăng nhập để sử dụng hệ thống</p>
+    <div class="field" style="margin-bottom:12px"><label>Tài khoản</label><input id="loginUsername" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="field"><label>Mật khẩu</label><input id="loginPassword" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div id="loginError" class="small" style="color:var(--red);margin-top:10px"></div>
+    <button class="btn primary" style="width:100%;margin-top:15px" onclick="doLogin()">Đăng nhập</button>
+  </div>
+</div>
+<div class="app" id="appRoot" style="display:none">
 <aside>
   <div class="brand">Phở <b>Bò</b></div>
   <nav>
@@ -54,13 +64,17 @@ h1,h2,h3{margin-top:0}.hint{color:var(--muted)}.topbar{display:flex;justify-cont
     <button onclick="go('pos',this)">🧾 Order món</button>
     <button onclick="go('kitchen',this)">🍜 Bếp</button>
     <div class="nav-sep"></div>
-    <button onclick="go('sales',this)">📊 Doanh thu</button>
+    <button data-admin="1" onclick="go('sales',this)">📊 Doanh thu</button>
     <button onclick="go('invoices',this)">🧮 Hóa đơn</button>
-    <button onclick="go('menuAdmin',this)">⚙️ Quản lý menu</button>
-    <button onclick="go('tableAdmin',this)">🧷 Quản lý bàn</button>
-    <button onclick="go('inventoryAdmin',this)">📦 Quản lý kho</button>
-    <button onclick="go('expenseAdmin',this)">💸 Chi phí cố định</button>
+    <button data-admin="1" onclick="go('menuAdmin',this)">⚙️ Quản lý menu</button>
+    <button data-admin="1" onclick="go('tableAdmin',this)">🧷 Quản lý bàn</button>
+    <button data-admin="1" onclick="go('inventoryAdmin',this)">📦 Quản lý kho</button>
+    <button data-admin="1" onclick="go('expenseAdmin',this)">💸 Chi phí cố định</button>
   </nav>
+  <div class="nav-sep"></div>
+  <div id="userBox" class="small" style="padding:0 8px;color:#dbbfa9"></div>
+  <button class="btn" style="width:100%;margin-top:8px" onclick="openChangePasswordModal()">🔑 Đổi mật khẩu</button>
+  <button class="btn" style="width:100%;margin-top:8px" onclick="doLogout()">↪ Đăng xuất</button>
 </aside>
 <main>
 <section id="tables" class="view active">
@@ -197,15 +211,32 @@ h1,h2,h3{margin-top:0}.hint{color:var(--muted)}.topbar{display:flex;justify-cont
  <div class="modal-actions"><button class="btn" onclick="closeModal('expenseEntryModal')">Hủy</button><button class="btn green" onclick="confirmExpenseEntry()">Xác nhận ghi nhận</button></div>
  </div>
 </div>
+
+<div id="changePasswordModal" class="modal">
+ <div class="modalbox"><div class="modalhead"><h2>Đổi mật khẩu</h2><button class="close" onclick="closeModal('changePasswordModal')">×</button></div>
+ <div class="formgrid">
+  <div class="field full"><label>Mật khẩu hiện tại</label><input id="cpOld" type="password"></div>
+  <div class="field full"><label>Mật khẩu mới</label><input id="cpNew" type="password"></div>
+ </div>
+ <div class="modal-actions"><button class="btn" onclick="closeModal('changePasswordModal')">Hủy</button><button class="btn primary" onclick="submitChangePassword()">Đổi mật khẩu</button></div>
+ </div>
+</div>
 <div id="toast" class="toast"></div>
 
 <script>
-let state=null,selected=null,menuCat='Tất cả',kitchenFilter='all',editingMenuId=null,editingIngredientId=null,stockInTargetId=null,editingExpenseTypeId=null,expenseEntryTargetId=null;
+let state=null,selected=null,menuCat='Tất cả',kitchenFilter='all',editingMenuId=null,editingIngredientId=null,stockInTargetId=null,editingExpenseTypeId=null,expenseEntryTargetId=null,currentUser=null;
 const V=n=>Number(n||0).toLocaleString('vi-VN')+'đ';
 const itemById=id=>state?.menu.find(x=>x.id===id);
 const table=()=>selected?state.tables.find(x=>x.id===selected):null;
-async function api(url,opt={}){const r=await fetch(url,{headers:{'Content-Type':'application/json',...(opt.headers||{})},...opt});const d=await r.json();if(!r.ok)throw Error(d.error||'API error');return d}
+async function api(url,opt={}){const r=await fetch(url,{headers:{'Content-Type':'application/json',...(opt.headers||{})},...opt});if(r.status===401){showLogin();throw Error('Phiên đăng nhập đã hết, vui lòng đăng nhập lại')}const d=await r.json();if(!r.ok)throw Error(d.error||'API error');return d}
 async function load(){state=await api('/api/state');drawAll()}
+function showLogin(){appRoot.style.display='none';loginScreen.style.display='flex';currentUser=null}
+function applyRoleUI(){userBox.textContent=`${currentUser.username} (${currentUser.role==='admin'?'Quản trị':'Nhân viên'})`;document.querySelectorAll('[data-admin]').forEach(b=>b.style.display=currentUser.role==='admin'?'':'none')}
+async function checkAuth(){try{currentUser=await api('/api/me');loginScreen.style.display='none';appRoot.style.display='grid';applyRoleUI();await load()}catch(e){showLogin()}}
+async function doLogin(){loginError.textContent='';const username=loginUsername.value.trim(),password=loginPassword.value;if(!username||!password)return loginError.textContent='Nhập đủ tài khoản và mật khẩu';try{currentUser=await api('/api/login',{method:'POST',body:JSON.stringify({username,password})});loginPassword.value='';loginScreen.style.display='none';appRoot.style.display='grid';applyRoleUI();await load()}catch(e){loginError.textContent=e.message}}
+async function doLogout(){await api('/api/logout',{method:'POST'}).catch(()=>{});location.reload()}
+function openChangePasswordModal(){cpOld.value='';cpNew.value='';changePasswordModal.classList.add('show')}
+async function submitChangePassword(){try{await api('/api/change-password',{method:'POST',body:JSON.stringify({oldPassword:cpOld.value,newPassword:cpNew.value})});closeModal('changePasswordModal');msg('Đã đổi mật khẩu')}catch(e){msg(e.message)}}
 const msg=x=>{toast.textContent=x;toast.className='toast show';setTimeout(()=>toast.className='toast',2200)};
 async function syncTable(){if(!table())return;await api('/api/table/'+selected,{method:'PUT',body:JSON.stringify({draft:table().draft,sent:table().sent})})}
 function go(v,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById(v).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');drawAll()}
@@ -253,7 +284,7 @@ async function saveExpenseType(){const name=etName.value.trim(),amount=Number(et
 async function removeExpenseType(id){if(!confirm('Xóa loại chi phí này?'))return;state.expenseTypes=state.expenseTypes.filter(x=>x.id!==id);await api('/api/expense-types',{method:'PUT',body:JSON.stringify(state.expenseTypes)});await load();msg('Đã xóa loại chi phí')}
 function openExpenseEntryModal(id){expenseEntryTargetId=id;const x=expenseTypeById(id);expenseEntryInfo.textContent=`Ghi nhận chi phí: ${x.name}`;expenseMonth.value=currentMonth();expenseAmount.value=x.amount;expenseNote.value='';expenseEntryModal.classList.add('show')}
 async function confirmExpenseEntry(){const amount=Number(expenseAmount.value),month=expenseMonth.value,note=expenseNote.value.trim();if(!amount||amount<=0)return msg('Nhập số tiền hợp lệ');if(!month)return msg('Chọn tháng ghi nhận');const r=await api('/api/expenses',{method:'POST',body:JSON.stringify({typeId:expenseEntryTargetId,amount,month,note})});closeModal('expenseEntryModal');await load();msg('Đã ghi nhận '+r.id)}
-load().catch(e=>{console.error(e);alert('Không kết nối được backend MongoDB: '+e.message)});
+checkAuth().catch(e=>{console.error(e);alert('Không kết nối được backend MongoDB: '+e.message)});
 </script>
 </body>
 </html>
