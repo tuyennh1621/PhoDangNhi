@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phở Bò Đăng Nhi · POS</title>
+<style>
+:root{--brown:#352016;--brown2:#5d392a;--gold:#efa653;--cream:#fff8f2;--line:#eddcd0;--green:#197652;--red:#b54835;--muted:#80695d}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:#342018;font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+aside{background:var(--brown);color:#f8e3d0;padding:22px 16px;position:sticky;top:0;height:100vh}
+.brand{font-size:23px;font-weight:800;padding:0 8px}.brand b{color:var(--gold)}
+nav{margin-top:26px;display:grid;gap:6px}nav button{border:0;border-radius:9px;padding:11px 12px;background:none;color:#ead0bc;text-align:left}
+nav button.active,nav button:hover{background:var(--brown2);color:#fff}
+.nav-sep{height:1px;background:#624535;margin:10px 8px}
+main{padding:24px;max-width:1500px;width:100%;margin:auto}.view{display:none}.view.active{display:block}
+h1,h2,h3{margin-top:0}.hint{color:var(--muted)}.topbar{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:18px}
+.grid{display:grid;gap:14px}.tables{grid-template-columns:repeat(auto-fill,minmax(155px,1fr))}
+.card,.table,.food,.kitchen,.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px}
+.table{text-align:left;border:1px solid var(--line);width:100%}.table:hover,.food:hover{border-color:#d97434;box-shadow:0 2px 10px #6d3d1b14}
+.table.busy{border-color:#e4b274}.table.ready{border-color:#68ae8f;background:#f5fcf8}
+.table-head{display:flex;justify-content:space-between}.badge{font-size:12px;border-radius:20px;padding:4px 8px;background:#eee}.badge.free{color:#178555;background:#eaf7f0}.badge.busy{color:#a8680e;background:#fff4dc}.badge.ready{color:#176c4c;background:#e5f6ee}
+.small{font-size:12px;color:var(--muted)}.money{font-weight:800}.muted{color:var(--muted)}
+.pos{display:grid;grid-template-columns:1fr 390px;gap:18px}.menu{grid-template-columns:repeat(auto-fill,minmax(165px,1fr))}
+.food{text-align:left}.food b,.food span{display:block}.food span{color:#b45122;margin-top:5px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.filters button,.btn{border:1px solid var(--line);border-radius:8px;padding:8px 11px;background:#fff}.filters button.active{background:var(--brown);color:#fff}.btn:disabled{opacity:.4;cursor:not-allowed}
+.order{background:var(--brown);color:#fff;border-radius:12px;padding:18px;position:sticky;top:18px;height:max-content}
+.tag{color:#dbbfa9;font-size:13px}.lines{min-height:120px;margin:16px 0}.line{display:flex;justify-content:space-between;gap:10px;margin:12px 0;padding-bottom:10px;border-bottom:1px solid #604131}
+.line small{display:block;color:#d8bda9}.qty button{width:25px;height:25px;background:#603a2a;color:white;border:0;border-radius:6px}.total{border-top:1px solid #654333;padding-top:14px;display:flex;justify-content:space-between;font-weight:bold;font-size:19px}
+.action{width:100%;margin-top:9px;padding:11px;border:0;border-radius:7px;font-weight:bold}.send{background:var(--gold);color:#36200f}.checkout{background:#eaf0ec;color:#183a29}.checkout:disabled{opacity:.4}
+.ticket{border-left:5px solid var(--gold);background:#fff8ec;padding:14px;margin:10px 0;border-radius:7px;color:#342018}.ticket.ready{border-color:#1ca168;background:#effaf4}
+.ticket button{background:var(--green);color:#fff;border:0;border-radius:6px;padding:7px 10px;margin-top:9px}
+.stats{grid-template-columns:repeat(4,1fr)}.stat .label{color:var(--muted)}.stat .value{font-size:25px;font-weight:800;margin-top:4px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.toolbar input,.toolbar select,.field input,.field select,.field textarea{padding:9px;border:1px solid var(--line);border-radius:7px;background:#fff}
+.toolbar input{min-width:220px}.btn.primary{background:var(--brown);color:#fff;border-color:var(--brown)}.btn.green{background:var(--green);color:#fff;border-color:var(--green)}.btn.danger{background:#fff0ed;color:var(--red);border-color:#efc9c0}
+.table-wrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px}table{border-collapse:collapse;width:100%}th,td{padding:10px 12px;border-bottom:1px solid #f0e4dc;text-align:left;white-space:nowrap}th{background:#fff8f2}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;padding:20px;z-index:20}.modal.show{display:flex}.modalbox{background:#fff;border-radius:14px;max-width:620px;width:100%;max-height:90vh;overflow:auto;padding:20px}
+.modalhead{display:flex;justify-content:space-between;align-items:center}.close{border:0;background:#eee;border-radius:50%;width:32px;height:32px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:5px}.field.full{grid-column:1/-1}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}
+.empty{padding:35px;text-align:center;color:var(--muted)}
+.toast{position:fixed;right:20px;bottom:20px;background:#493024;color:#fff;padding:13px 17px;border-radius:8px;display:none;z-index:30}.toast.show{display:block}
+.tabs{display:flex;gap:5px;margin-bottom:15px}.tabs button{padding:8px 12px;border:1px solid var(--line);background:#fff;border-radius:7px}.tabs button.active{background:var(--brown);color:#fff}
+@media(max-width:900px){.app{grid-template-columns:1fr}aside{height:auto;position:static;padding:12px;display:flex;align-items:center;gap:12px}.brand{white-space:nowrap}nav{margin:0;display:flex;overflow:auto}nav button{white-space:nowrap}.nav-sep{display:none}.pos{grid-template-columns:1fr}.order{position:static}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){main{padding:14px}.stats{grid-template-columns:1fr 1fr}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.tables{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="brand">Phở <b>Bò</b></div>
+  <nav>
+    <button class="active" onclick="go('tables',this)">🪑 Sơ đồ bàn</button>
+    <button onclick="go('pos',this)">🧾 Order món</button>
+    <button onclick="go('kitchen',this)">🍜 Bếp</button>
+    <div class="nav-sep"></div>
+    <button onclick="go('sales',this)">📊 Doanh thu</button>
+    <button onclick="go('invoices',this)">🧮 Hóa đơn</button>
+    <button onclick="go('menuAdmin',this)">⚙️ Quản lý menu</button>
+    <button onclick="go('tableAdmin',this)">🧷 Quản lý bàn</button>
+    <button onclick="go('inventoryAdmin',this)">📦 Quản lý kho</button>
+    <button onclick="go('expenseAdmin',this)">💸 Chi phí cố định</button>
+  </nav>
+</aside>
+<main>
+<section id="tables" class="view active">
+  <div class="topbar"><div><h1>Sơ đồ bàn</h1><p class="hint">Chọn bàn để order hoặc xem đơn đang phục vụ.</p></div><button class="btn" onclick="refreshAll()">↻ Làm mới</button></div>
+  <div id="tablegrid" class="grid tables"></div>
+</section>
+
+<section id="pos" class="view">
+  <div class="topbar"><div><h1>Order món</h1><p class="hint">Chọn món → gửi bếp → hoàn tất → thanh toán.</p></div><button class="btn" onclick="goByName('tables')">← Về sơ đồ bàn</button></div>
+  <div class="pos">
+    <div>
+      <div class="filters" id="menuFilters"></div>
+      <div id="menu" class="grid menu"></div>
+    </div>
+    <div class="order">
+      <h2>Đơn tại bàn</h2><div id="tabletag" class="tag">Chưa chọn bàn</div>
+      <div id="sentLines"></div><div id="lines" class="lines">Chọn bàn và món để bắt đầu.</div>
+      <div class="total"><span>Tổng</span><span id="total">0đ</span></div>
+      <button class="action send" onclick="sendKitchen()">Gửi bếp</button>
+      <button id="checkout" class="action checkout" onclick="openCheckout()" disabled>Thanh toán / Checkout</button>
+    </div>
+  </div>
+</section>
+
+<section id="kitchen" class="view">
+  <div class="topbar"><div><h1>Đơn bếp</h1><p class="hint">Theo dõi món mới, món đang chế biến và món hoàn tất.</p></div></div>
+  <div class="tabs" id="kitchenTabs"></div><div id="tickets"></div>
+</section>
+
+<section id="sales" class="view">
+  <div class="topbar"><div><h1>Doanh thu</h1><p class="hint">Thống kê từ các hóa đơn đã thanh toán trên thiết bị này.</p></div></div>
+  <div id="stats" class="grid stats"></div>
+  <div class="card" style="margin-top:15px"><h3>Top món bán chạy</h3><div id="topItems"></div></div>
+</section>
+
+<section id="invoices" class="view">
+  <div class="topbar"><div><h1>Hóa đơn</h1><p class="hint">Lịch sử các giao dịch đã checkout.</p></div></div>
+  <div class="toolbar"><input id="invoiceSearch" placeholder="Tìm mã hóa đơn / bàn / phương thức" oninput="drawInvoices()"></div>
+  <div class="table-wrap"><table><thead><tr><th>Mã</th><th>Thời gian</th><th>Bàn</th><th>Món</th><th>Tổng</th><th>Thanh toán</th><th></th></tr></thead><tbody id="invoiceRows"></tbody></table></div>
+</section>
+
+<section id="menuAdmin" class="view">
+  <div class="topbar"><div><h1>Quản lý menu</h1><p class="hint">Thêm, sửa, ẩn món và cập nhật giá bán.</p></div><button class="btn primary" onclick="openMenuModal()">＋ Thêm món</button></div>
+  <div class="table-wrap"><table><thead><tr><th>Món</th><th>Nhóm</th><th>Giá</th><th>Trạng thái</th><th></th></tr></thead><tbody id="menuRows"></tbody></table></div>
+</section>
+
+<section id="tableAdmin" class="view">
+  <div class="topbar"><div><h1>Quản lý bàn</h1><p class="hint">Thêm hoặc xóa bàn trong quán.</p></div><button class="btn primary" onclick="addTable()">＋ Thêm bàn</button></div>
+  <div class="table-wrap"><table><thead><tr><th>Bàn</th><th>Trạng thái</th><th>Số món</th><th></th></tr></thead><tbody id="tableRows"></tbody></table></div>
+</section>
+
+<section id="inventoryAdmin" class="view">
+  <div class="topbar"><div><h1>Quản lý kho</h1><p class="hint">Theo dõi tồn kho và nhập nguyên liệu (thịt bò, xương bò, bánh phở...).</p></div><button class="btn primary" onclick="openIngredientModal()">＋ Thêm nguyên liệu</button></div>
+  <div class="table-wrap"><table><thead><tr><th>Nguyên liệu</th><th>Đơn vị</th><th>Tồn kho</th><th>Mức tối thiểu</th><th></th></tr></thead><tbody id="inventoryRows"></tbody></table></div>
+  <h3 style="margin-top:24px">Lịch sử nhập kho</h3>
+  <div class="table-wrap"><table><thead><tr><th>Mã</th><th>Thời gian</th><th>Nguyên liệu</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th><th>Ghi chú</th></tr></thead><tbody id="stockInRows"></tbody></table></div>
+</section>
+
+<section id="expenseAdmin" class="view">
+  <div class="topbar"><div><h1>Chi phí cố định</h1><p class="hint">Ghi nhận chi phí vận hành hàng tháng: mặt bằng, điện, nước, nhân viên...</p></div><button class="btn primary" onclick="openExpenseTypeModal()">＋ Thêm loại chi phí</button></div>
+  <div class="table-wrap"><table><thead><tr><th>Loại chi phí</th><th>Số tiền mặc định / tháng</th><th></th></tr></thead><tbody id="expenseTypeRows"></tbody></table></div>
+  <h3 style="margin-top:24px">Lịch sử chi phí</h3>
+  <div class="table-wrap"><table><thead><tr><th>Mã</th><th>Tháng</th><th>Loại chi phí</th><th>Số tiền</th><th>Ghi chú</th></tr></thead><tbody id="expenseRows"></tbody></table></div>
+</section>
+</main>
+</div>
+
+<div id="checkoutModal" class="modal">
+ <div class="modalbox"><div class="modalhead"><h2>Thanh toán</h2><button class="close" onclick="closeModal('checkoutModal')">×</button></div>
+ <div id="checkoutSummary"></div>
+ <div class="formgrid" style="margin-top:15px">
+  <div class="field"><label>Phương thức</label><select id="payMethod" onchange="drawCheckout()"><option>Tiền mặt</option><option>Chuyển khoản</option></select></div>
+  <div class="field"><label>Tiền khách đưa</label><input id="cashGiven" type="number" min="0" oninput="drawCheckout()"></div>
+ </div>
+ <div id="changeBox" style="margin-top:12px"></div>
+ <div class="modal-actions"><button class="btn" onclick="closeModal('checkoutModal')">Hủy</button><button class="btn green" onclick="finishCheckout()">Xác nhận thanh toán</button></div>
+ </div>
+</div>
+
+<div id="menuModal" class="modal">
+ <div class="modalbox"><div class="modalhead"><h2 id="menuModalTitle">Thêm món</h2><button class="close" onclick="closeModal('menuModal')">×</button></div>
+ <div class="formgrid">
+  <div class="field full"><label>Tên món</label><input id="mName"></div>
+  <div class="field"><label>Nhóm</label><select id="mCat"><option>Phở</option><option>Đồ ăn</option><option>Đồ uống</option><option>Khác</option></select></div>
+  <div class="field"><label>Giá bán</label><input id="mPrice" type="number" min="0"></div>
+  <div class="field full"><label><input id="mActive" type="checkbox" checked> Đang bán</label></div>
+ </div>
+ <div class="modal-actions"><button class="btn" onclick="closeModal('menuModal')">Hủy</button><button class="btn primary" onclick="saveMenu()">Lưu món</button></div>
+ </div>
+</div>
+
+<div id="ingredientModal" class="modal">
+ <div class="modalbox"><div class="modalhead"><h2 id="ingredientModalTitle">Thêm nguyên liệu</h2><button class="close" onclick="closeModal('ingredientModal')">×</button></div>
+ <div class="formgrid">
+  <div class="field full"><label>Tên nguyên liệu</label><input id="ingName"></div>
+  <div class="field"><label>Đơn vị</label><input id="ingUnit" placeholder="kg, lít, cái..."></div>
+  <div class="field"><label>Tồn kho hiện tại</label><input id="ingStock" type="number" min="0"></div>
+  <div class="field full"><label>Mức tối thiểu cảnh báo</label><input id="ingMin" type="number" min="0"></div>
+ </div>
+ <div class="modal-actions"><button class="btn" onclick="closeModal('ingredientModal')">Hủy</button><button class="btn primary" onclick="saveIngredient()">Lưu</button></div>
+ </div>
+</div>
+
+<div id="stockInModal" class="modal">
+ <div class="modalbox"><div class="modalhead"><h2>Nhập kho</h2><button class="close" onclick="closeModal('stockInModal')">×</button></div>
+ <div id="stockInInfo" class="hint" style="margin-bottom:10px"></div>
+ <div class="formgrid">
+  <div class="field"><label>Số lượng nhập</label><input id="stockQty" type="number" min="0"></div>
+  <div class="field"><label>Đơn giá (đ)</label><input id="stockPrice" type="number" min="0"></div>
+  <div class="field full"><label>Ghi chú</label><input id="stockNote" placeholder="Nhà cung cấp, ghi chú..."></div>
+ </div>
+ <div class="modal-actions"><button class="btn" onclick="closeModal('stockInModal')">Hủy</button><button class="btn green" onclick="confirmStockIn()">Xác nhận nhập kho</button></div>
+ </div>
+</div>
+
+<div id="expenseTypeModal" class="modal">
+ <div class="modalbox"><div class="modalhead"><h2 id="expenseTypeModalTitle">Thêm loại chi phí</h2><button class="close" onclick="closeModal('expenseTypeModal')">×</button></div>
+ <div class="formgrid">
+  <div class="field full"><label>Tên loại chi phí</label><input id="etName" placeholder="Mặt bằng, điện, nước, nhân viên..."></div>
+  <div class="field full"><label>Số tiền mặc định / tháng (đ)</label><input id="etAmount" type="number" min="0"></div>
+ </div>
+ <div class="modal-actions"><button class="btn" onclick="closeModal('expenseTypeModal')">Hủy</button><button class="btn primary" onclick="saveExpenseType()">Lưu</button></div>
+ </div>
+</div>
+
+<div id="expenseEntryModal" class="modal">
+ <div class="modalbox"><div class="modalhead"><h2>Ghi nhận chi phí</h2><button class="close" onclick="closeModal('expenseEntryModal')">×</button></div>
+ <div id="expenseEntryInfo" class="hint" style="margin-bottom:10px"></div>
+ <div class="formgrid">
+  <div class="field"><label>Tháng</label><input id="expenseMonth" type="month"></div>
+  <div class="field"><label>Số tiền (đ)</label><input id="expenseAmount" type="number" min="0"></div>
+  <div class="field full"><label>Ghi chú</label><input id="expenseNote" placeholder="Ghi chú (không bắt buộc)"></div>
+ </div>
+ <div class="modal-actions"><button class="btn" onclick="closeModal('expenseEntryModal')">Hủy</button><button class="btn green" onclick="confirmExpenseEntry()">Xác nhận ghi nhận</button></div>
+ </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+let state=null,selected=null,menuCat='Tất cả',kitchenFilter='all',editingMenuId=null,editingIngredientId=null,stockInTargetId=null,editingExpenseTypeId=null,expenseEntryTargetId=null;
+const V=n=>Number(n||0).toLocaleString('vi-VN')+'đ';
+const itemById=id=>state?.menu.find(x=>x.id===id);
+const table=()=>selected?state.tables.find(x=>x.id===selected):null;
+async function api(url,opt={}){const r=await fetch(url,{headers:{'Content-Type':'application/json',...(opt.headers||{})},...opt});const d=await r.json();if(!r.ok)throw Error(d.error||'API error');return d}
+async function load(){state=await api('/api/state');drawAll()}
+const msg=x=>{toast.textContent=x;toast.className='toast show';setTimeout(()=>toast.className='toast',2200)};
+async function syncTable(){if(!table())return;await api('/api/table/'+selected,{method:'PUT',body:JSON.stringify({draft:table().draft,sent:table().sent})})}
+function go(v,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById(v).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');drawAll()}
+function goByName(v){const buttons=[...document.querySelectorAll('nav button')];const map=['tables','pos','kitchen','sales','invoices','menuAdmin','tableAdmin','inventoryAdmin','expenseAdmin'];go(v,buttons[map.indexOf(v)])}
+function drawAll(){if(!state)return;drawTables();drawMenuFilters();drawMenu();drawOrder();drawKitchen();drawSales();drawInvoices();drawMenuAdmin();drawTableAdmin();drawInventory();drawExpenseAdmin()}
+function drawTables(){tablegrid.innerHTML=state.tables.map(o=>{const allItems=[...o.sent.flatMap(x=>x.items),...o.draft],sum=allItems.reduce((s,i)=>s+(itemById(i.i)?.price||0)*i.q,0),ready=o.sent.some(x=>x.status==='ready'),busy=o.sent.length+o.draft.length;return `<button class="table ${ready?'ready':busy?'busy':''}" onclick="pick(${o.id})"><div class="table-head"><b>Bàn ${String(o.id).padStart(2,'0')}</b><span class="badge ${ready?'ready':busy?'busy':'free'}">${ready?'Món xong':busy?'Đang phục vụ':'Trống'}</span></div><div style="margin-top:14px">${busy?`<b>${V(sum)}</b><div class="small">${o.sent.length} đơn bếp · ${allItems.reduce((s,i)=>s+i.q,0)} món</div>`:'Sẵn sàng order'}</div></button>`}).join('')}
+function pick(id){selected=id;tabletag.textContent='Bàn '+String(id).padStart(2,'0');goByName('pos')}
+async function addTable(){const t=await api('/api/tables',{method:'POST'});state.tables.push(t);drawAll();msg('Đã thêm bàn '+String(t.id).padStart(2,'0'))}
+async function removeTable(id){if(!confirm('Xóa bàn '+String(id).padStart(2,'0')+'?'))return;try{await api('/api/table/'+id,{method:'DELETE'});state.tables=state.tables.filter(t=>t.id!==id);drawAll();msg('Đã xóa bàn '+String(id).padStart(2,'0'))}catch(e){msg(e.message)}}
+async function refreshAll(){await load();msg('Đã làm mới')}
+function drawMenuFilters(){const cats=['Tất cả',...new Set(state.menu.filter(x=>x.active).map(x=>x.cat))];menuFilters.innerHTML=cats.map(c=>`<button class="${menuCat===c?'active':''}" onclick="menuCat='${c.replaceAll("'","&#39;")}';drawMenuFilters();drawMenu()">${c}</button>`).join('')}
+function drawMenu(){const list=state.menu.filter(x=>x.active&&(menuCat==='Tất cả'||x.cat===menuCat));menu.innerHTML=list.length?list.map(x=>`<button class="food" onclick="addItem(${x.id})"><b>🥩 ${x.name}</b><span>${V(x.price)}</span><small class="small">${x.cat}</small></button>`).join(''):'<div class="empty">Không có món đang bán.</div>'}
+async function addItem(id){if(!table())return msg('Hãy chọn bàn trước');const x=table().draft.find(x=>x.i===id);x?x.q++:table().draft.push({i:id,q:1});await syncTable();drawAll()}
+async function adjust(id,n){const x=table()?.draft.find(x=>x.i===id);if(!x)return;x.q+=n;if(x.q<1)table().draft=table().draft.filter(a=>a.i!==id);await syncTable();drawAll()}
+function drawOrder(){if(!selected){tabletag.textContent='Chưa chọn bàn';lines.innerHTML='Chọn bàn và món để bắt đầu.';sentLines.innerHTML='';total.textContent='0đ';checkout.disabled=true;return}const t=table(),draft=t.draft||[],sent=t.sent||[];sentLines.innerHTML=sent.length?`<div class="small" style="margin:10px 0">ĐÃ GỬI BẾP</div>`+sent.map(x=>`<div class="ticket ${x.status==='ready'?'ready':''}"><b>${x.id}</b> · ${x.status==='ready'?'Đã hoàn tất':'Đang chế biến'}<br><span class="small">${x.items.map(a=>`${a.q} × ${itemById(a.i)?.name||'Món'}`).join(' · ')}</span></div>`).join(''):'';lines.innerHTML=draft.length?`<div class="small">MÓN CHƯA GỬI BẾP</div>`+draft.map(x=>`<div class="line"><span>${itemById(x.i)?.name||'Món'}<small>${V(itemById(x.i)?.price||0)}</small></span><span class="qty"><button onclick="adjust(${x.i},-1)">−</button> ${x.q} <button onclick="adjust(${x.i},1)">+</button></span></div>`).join(''):'<span class="muted">Chưa có món mới.</span>';const sum=sent.reduce((s,o)=>s+o.items.reduce((a,i)=>a+(itemById(i.i)?.price||0)*i.q,0),0)+draft.reduce((s,i)=>s+(itemById(i.i)?.price||0)*i.q,0);total.textContent=V(sum);checkout.disabled=!sent.some(x=>x.status==='ready')}
+async function sendKitchen(){if(!table())return msg('Hãy chọn bàn trước');if(!table().draft.length)return msg('Chưa có món mới');const x=await api('/api/order',{method:'POST',body:JSON.stringify({table:selected,items:table().draft})});table().sent.push(x);table().draft=[];state.kitchen.push(x);drawAll();msg('Đã gửi '+x.id+' đến bếp')}
+function drawKitchen(){const tabs=[['all','Tất cả'],['cooking','Đang làm'],['ready','Hoàn tất']];kitchenTabs.innerHTML=tabs.map(([v,n])=>`<button class="${kitchenFilter===v?'active':''}" onclick="kitchenFilter='${v}';drawKitchen()">${n}</button>`).join('');const arr=state.kitchen.filter(x=>kitchenFilter==='all'||x.status===kitchenFilter);tickets.innerHTML=arr.length?arr.map(x=>`<div class="ticket ${x.status==='ready'?'ready':''}"><b>${x.id} · Bàn ${String(x.table).padStart(2,'0')}</b> <span class="small">${new Date(x.createdAt).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})}</span><div style="margin-top:8px">${x.items.map(a=>`<b>${a.q} × ${itemById(a.i)?.name||'Món'}</b>`).join('<br>')}</div><div class="small" style="margin-top:6px">${x.status==='cooking'?'Đang chế biến':'Đã hoàn tất · Chờ thanh toán'}</div>${x.status==='cooking'?`<button onclick="readyKitchen('${x.id}')">✓ Hoàn tất món</button>`:''}</div>`).join(''):'<div class="empty">Không có đơn ở trạng thái này.</div>'}
+async function readyKitchen(id){const x=await api('/api/order/'+id+'/ready',{method:'PATCH'});const t=state.tables.find(a=>a.id===x.table),s=t?.sent.find(a=>a.id===id);if(s)s.status='ready';state.kitchen=state.kitchen.map(a=>a.id===id?x:a);drawAll();msg('Bếp đã hoàn tất '+id)}
+function openCheckout(){if(!table())return;if(!table().sent.some(x=>x.status==='ready'))return msg('Chờ bếp hoàn tất món');cashGiven.value='';payMethod.value='Tiền mặt';checkoutModal.classList.add('show');drawCheckout()}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function currentTotal(){return table()?.sent.reduce((s,x)=>s+x.items.reduce((a,i)=>a+(itemById(i.i)?.price||0)*i.q,0),0)||0}
+function drawCheckout(){const t=table(),sum=currentTotal();checkoutSummary.innerHTML=`<div class="card"><b>Bàn ${String(t.id).padStart(2,'0')}</b><div style="margin-top:8px">${t.sent.map(x=>x.items.map(a=>`${a.q} × ${itemById(a.i)?.name||'Món'} — ${V((itemById(a.i)?.price||0)*a.q)}`).join('<br>')).join('<hr>')}<div class="total" style="color:#342018"><span>Tổng thanh toán</span><span>${V(sum)}</span></div></div></div>`;const given=Number(cashGiven.value||0);changeBox.innerHTML=payMethod.value==='Tiền mặt'?`<div><b>Tiền thừa:</b> ${V(Math.max(0,given-sum))}${given<sum?` <span style="color:#b54835">· Khách đưa chưa đủ</span>`:''}</div>`:'<div class="small">Chuyển khoản: xác nhận số tiền đã nhận trước khi checkout.</div>'}
+async function finishCheckout(){const t=table(),sum=currentTotal(),method=payMethod.value,given=Number(cashGiven.value||0);if(!t||!t.sent.some(x=>x.status==='ready'))return msg('Chưa đủ điều kiện thanh toán');if(method==='Tiền mặt'&&given<sum)return msg('Tiền khách đưa chưa đủ');const inv=await api('/api/invoice',{method:'POST',body:JSON.stringify({table:t.id,total:sum,method,items:t.sent.flatMap(x=>x.items.map(a=>({i:a.i,q:a.q})))})});state.invoices.unshift(inv);state.kitchen=state.kitchen.filter(x=>x.table!==t.id);t.draft=[];t.sent=[];closeModal('checkoutModal');selected=null;drawAll();goByName('tables');msg(inv.id+' · Thanh toán thành công')}
+function drawSales(){const inv=state.invoices,total=inv.reduce((s,x)=>s+x.total,0),cash=inv.filter(x=>x.method==='Tiền mặt').reduce((s,x)=>s+x.total,0),bank=inv.filter(x=>x.method==='Chuyển khoản').reduce((s,x)=>s+x.total,0),stockExpense=(state.stockIns||[]).reduce((s,x)=>s+x.total,0),opExpense=(state.expenses||[]).reduce((s,x)=>s+x.amount,0),profit=total-stockExpense-opExpense;stats.innerHTML=[['Doanh thu',V(total)],['Chi phí nhập kho',V(stockExpense)],['Chi phí vận hành',V(opExpense)],['Lợi nhuận',V(profit),profit<0],['Hóa đơn',inv.length],['Tiền mặt',V(cash)],['Chuyển khoản',V(bank)]].map(x=>`<div class="stat"><div class="label">${x[0]}</div><div class="value" style="${x[2]?'color:#b54835':''}">${x[1]}</div></div>`).join('');const count={};inv.flatMap(x=>x.items).forEach(a=>count[a.i]=(count[a.i]||0)+a.q);const top=Object.entries(count).sort((a,b)=>b[1]-a[1]);topItems.innerHTML=top.length?`<table><tr><th>#</th><th>Món</th><th>Số lượng</th></tr>${top.map((x,i)=>`<tr><td>${i+1}</td><td>${itemById(Number(x[0]))?.name||'Món'}</td><td>${x[1]}</td></tr>`).join('')}</table>`:'<div class="empty">Chưa có dữ liệu bán hàng.</div>'}
+function drawInvoices(){const q=(invoiceSearch.value||'').toLowerCase();const arr=state.invoices.filter(x=>(x.id+' '+x.table+' '+x.method).toLowerCase().includes(q));invoiceRows.innerHTML=arr.length?arr.map(x=>`<tr><td><b>${x.id}</b></td><td>${new Date(x.time).toLocaleString('vi-VN')}</td><td>Bàn ${String(x.table).padStart(2,'0')}</td><td>${x.items.reduce((s,a)=>s+a.q,0)}</td><td><b>${V(x.total)}</b></td><td>${x.method}</td><td><button class="btn" onclick="showInvoice('${x.id}')">Xem</button></td></tr>`).join(''):'<tr><td colspan="7"><div class="empty">Chưa có hóa đơn.</div></td></tr>'}
+function showInvoice(id){const x=state.invoices.find(a=>a.id===id);if(!x)return;alert(`${x.id}\nBàn ${x.table}\n${new Date(x.time).toLocaleString('vi-VN')}\n\n${x.items.map(a=>`${a.q} × ${itemById(a.i)?.name||'Món'}`).join('\n')}\n\nTổng: ${V(x.total)}\nThanh toán: ${x.method}`)}
+function drawMenuAdmin(){menuRows.innerHTML=state.menu.map(x=>`<tr><td><b>${x.name}</b></td><td>${x.cat}</td><td>${V(x.price)}</td><td>${x.active?'Đang bán':'Đang ẩn'}</td><td><button class="btn" onclick="openMenuModal(${x.id})">Sửa</button> <button class="btn ${x.active?'danger':''}" onclick="toggleMenu(${x.id})">${x.active?'Ẩn':'Bán lại'}</button></td></tr>`).join('')}
+function drawTableAdmin(){tableRows.innerHTML=state.tables.map(o=>{const busy=o.sent.length+o.draft.length,ready=o.sent.some(x=>x.status==='ready'),qty=[...o.sent.flatMap(x=>x.items),...o.draft].reduce((s,i)=>s+i.q,0);return `<tr><td><b>Bàn ${String(o.id).padStart(2,'0')}</b></td><td>${ready?'Món xong':busy?'Đang phục vụ':'Trống'}</td><td>${qty}</td><td><button class="btn danger" ${busy?'disabled title="Bàn đang có món"':''} onclick="removeTable(${o.id})">Xóa</button></td></tr>`}).join('')}
+function openMenuModal(id=null){editingMenuId=id;const x=id?itemById(id):{name:'',cat:'Phở',price:0,active:true};menuModalTitle.textContent=id?'Sửa món':'Thêm món';mName.value=x.name;mCat.value=x.cat;mPrice.value=x.price;mActive.checked=x.active;menuModal.classList.add('show')}
+async function saveMenu(){const name=mName.value.trim(),price=Number(mPrice.value);if(!name||price<0)return msg('Nhập tên và giá hợp lệ');if(editingMenuId){const x=itemById(editingMenuId);Object.assign(x,{name,price,cat:mCat.value,active:mActive.checked})}else state.menu.push({id:Math.max(0,...state.menu.map(x=>x.id))+1,name,price,cat:mCat.value,active:mActive.checked});await api('/api/menu',{method:'PUT',body:JSON.stringify(state.menu)});closeModal('menuModal');await load();msg('Đã lưu món')}
+async function toggleMenu(id){const x=itemById(id);x.active=!x.active;await api('/api/menu',{method:'PUT',body:JSON.stringify(state.menu)});await load();msg(x.active?'Đã mở bán món':'Đã ẩn món')}
+const ingredientById=id=>state?.inventory.find(x=>x.id===id);
+function drawInventory(){inventoryRows.innerHTML=state.inventory.length?state.inventory.map(x=>{const low=x.stock<=x.minStock;return `<tr><td><b>${x.name}</b></td><td>${x.unit}</td><td style="${low?'color:#b54835;font-weight:700':''}">${x.stock}${low?' ⚠ Sắp hết':''}</td><td>${x.minStock}</td><td><button class="btn green" onclick="openStockInModal(${x.id})">Nhập kho</button> <button class="btn" onclick="openIngredientModal(${x.id})">Sửa</button> <button class="btn danger" onclick="removeIngredient(${x.id})">Xóa</button></td></tr>`}).join(''):'<tr><td colspan="5"><div class="empty">Chưa có nguyên liệu nào.</div></td></tr>';drawStockIns()}
+function drawStockIns(){const list=state.stockIns||[];stockInRows.innerHTML=list.length?list.map(x=>`<tr><td><b>${x.id}</b></td><td>${new Date(x.time).toLocaleString('vi-VN')}</td><td>${x.ingredientName}</td><td>${x.qty}</td><td>${V(x.price)}</td><td><b>${V(x.total)}</b></td><td>${x.note||''}</td></tr>`).join(''):'<tr><td colspan="7"><div class="empty">Chưa có lịch sử nhập kho.</div></td></tr>'}
+function openIngredientModal(id=null){editingIngredientId=id;const x=id?ingredientById(id):{name:'',unit:'kg',stock:0,minStock:0};ingredientModalTitle.textContent=id?'Sửa nguyên liệu':'Thêm nguyên liệu';ingName.value=x.name;ingUnit.value=x.unit;ingStock.value=x.stock;ingMin.value=x.minStock;ingredientModal.classList.add('show')}
+async function saveIngredient(){const name=ingName.value.trim(),unit=ingUnit.value.trim()||'kg',stock=Number(ingStock.value)||0,minStock=Number(ingMin.value)||0;if(!name)return msg('Nhập tên nguyên liệu');if(editingIngredientId){Object.assign(ingredientById(editingIngredientId),{name,unit,stock,minStock})}else state.inventory.push({id:Math.max(0,...state.inventory.map(x=>x.id))+1,name,unit,stock,minStock});await api('/api/inventory',{method:'PUT',body:JSON.stringify(state.inventory)});closeModal('ingredientModal');await load();msg('Đã lưu nguyên liệu')}
+async function removeIngredient(id){if(!confirm('Xóa nguyên liệu này?'))return;state.inventory=state.inventory.filter(x=>x.id!==id);await api('/api/inventory',{method:'PUT',body:JSON.stringify(state.inventory)});await load();msg('Đã xóa nguyên liệu')}
+function openStockInModal(id){stockInTargetId=id;const x=ingredientById(id);stockInInfo.textContent=`Nhập kho cho: ${x.name} (đang tồn ${x.stock} ${x.unit})`;stockQty.value='';stockPrice.value='';stockNote.value='';stockInModal.classList.add('show')}
+async function confirmStockIn(){const qty=Number(stockQty.value),price=Number(stockPrice.value)||0,note=stockNote.value.trim();if(!qty||qty<=0)return msg('Nhập số lượng hợp lệ');const r=await api('/api/stock-in',{method:'POST',body:JSON.stringify({ingredientId:stockInTargetId,qty,price,note})});closeModal('stockInModal');await load();msg('Đã nhập kho '+r.entry.id)}
+const expenseTypeById=id=>state?.expenseTypes.find(x=>x.id===id);
+const currentMonth=()=>new Date().toISOString().slice(0,7);
+function drawExpenseAdmin(){const types=state.expenseTypes||[];expenseTypeRows.innerHTML=types.length?types.map(x=>`<tr><td><b>${x.name}</b></td><td>${V(x.amount)}</td><td><button class="btn green" onclick="openExpenseEntryModal(${x.id})">Ghi nhận</button> <button class="btn" onclick="openExpenseTypeModal(${x.id})">Sửa</button> <button class="btn danger" onclick="removeExpenseType(${x.id})">Xóa</button></td></tr>`).join(''):'<tr><td colspan="3"><div class="empty">Chưa có loại chi phí nào.</div></td></tr>';const list=state.expenses||[];expenseRows.innerHTML=list.length?list.map(x=>`<tr><td><b>${x.id}</b></td><td>${x.month}</td><td>${x.typeName}</td><td><b>${V(x.amount)}</b></td><td>${x.note||''}</td></tr>`).join(''):'<tr><td colspan="5"><div class="empty">Chưa có chi phí nào được ghi nhận.</div></td></tr>'}
+function openExpenseTypeModal(id=null){editingExpenseTypeId=id;const x=id?expenseTypeById(id):{name:'',amount:0};expenseTypeModalTitle.textContent=id?'Sửa loại chi phí':'Thêm loại chi phí';etName.value=x.name;etAmount.value=x.amount;expenseTypeModal.classList.add('show')}
+async function saveExpenseType(){const name=etName.value.trim(),amount=Number(etAmount.value)||0;if(!name)return msg('Nhập tên loại chi phí');if(editingExpenseTypeId){Object.assign(expenseTypeById(editingExpenseTypeId),{name,amount})}else state.expenseTypes.push({id:Math.max(0,...state.expenseTypes.map(x=>x.id))+1,name,amount});await api('/api/expense-types',{method:'PUT',body:JSON.stringify(state.expenseTypes)});closeModal('expenseTypeModal');await load();msg('Đã lưu loại chi phí')}
+async function removeExpenseType(id){if(!confirm('Xóa loại chi phí này?'))return;state.expenseTypes=state.expenseTypes.filter(x=>x.id!==id);await api('/api/expense-types',{method:'PUT',body:JSON.stringify(state.expenseTypes)});await load();msg('Đã xóa loại chi phí')}
+function openExpenseEntryModal(id){expenseEntryTargetId=id;const x=expenseTypeById(id);expenseEntryInfo.textContent=`Ghi nhận chi phí: ${x.name}`;expenseMonth.value=currentMonth();expenseAmount.value=x.amount;expenseNote.value='';expenseEntryModal.classList.add('show')}
+async function confirmExpenseEntry(){const amount=Number(expenseAmount.value),month=expenseMonth.value,note=expenseNote.value.trim();if(!amount||amount<=0)return msg('Nhập số tiền hợp lệ');if(!month)return msg('Chọn tháng ghi nhận');const r=await api('/api/expenses',{method:'POST',body:JSON.stringify({typeId:expenseEntryTargetId,amount,month,note})});closeModal('expenseEntryModal');await load();msg('Đã ghi nhận '+r.id)}
+load().catch(e=>{console.error(e);alert('Không kết nối được backend MongoDB: '+e.message)});
+</script>
+</body>
+</html>
