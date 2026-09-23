@@ -3,6 +3,9 @@ import express from 'express';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import dns from 'node:dns';
+
+dns.setDefaultResultOrder('ipv4first');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
