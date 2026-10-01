@@ -46,9 +46,8 @@ section{padding:56px 0}
 .badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 .badge{background:var(--cream);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--brown2)}
 
-.menuTabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:28px}
-.menuTabs button{border:1px solid var(--line);background:#fff;padding:9px 16px;border-radius:999px;font-weight:600;cursor:pointer;font-size:14px}
-.menuTabs button.active{background:var(--brown);color:#fff;border-color:var(--brown)}
+.menu-group-title{font-size:19px;color:var(--brown2);margin:0 0 16px}
+.menu-group-title:not(:first-of-type){margin-top:36px}
 .menuGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
 .mItem{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .mItem b{display:block;font-size:16px}
@@ -130,8 +129,10 @@ footer b{color:#fff}
   <div class="wrap">
     <h2 class="section-title">Menu</h2>
     <p class="section-sub">Giá niêm yết, cập nhật trực tiếp từ hệ thống quản lý của quán.</p>
-    <div class="menuTabs" id="menuTabs"></div>
-    <div class="menuGrid" id="menuGrid"></div>
+    <h3 class="menu-group-title">🍜 Món ăn</h3>
+    <div class="menuGrid" id="menuGridFood"></div>
+    <h3 class="menu-group-title">🥤 Đồ uống</h3>
+    <div class="menuGrid" id="menuGridDrink"></div>
   </div>
 </section>
 
@@ -171,7 +172,7 @@ footer b{color:#fff}
 
 <script>
 const V=n=>Number(n||0).toLocaleString('vi-VN')+'đ';
-let menuData=[], activeCat='Tất cả';
+let menuData=[];
 
 (function(){
   const end=new Date('2026-10-04T23:59:59');
@@ -182,20 +183,17 @@ async function loadMenu(){
   try{
     const r=await fetch('/api/public/menu');
     menuData=await r.json();
-    drawTabs();
     drawMenu();
   }catch(e){
-    menuGrid.innerHTML='<div class="menuEmpty">Không tải được menu, vui lòng thử lại sau.</div>';
+    menuGridFood.innerHTML=menuGridDrink.innerHTML='<div class="menuEmpty">Không tải được menu, vui lòng thử lại sau.</div>';
   }
 }
-function drawTabs(){
-  const cats=['Tất cả',...new Set(menuData.map(x=>x.cat))];
-  menuTabs.innerHTML=cats.map(c=>`<button class="${activeCat===c?'active':''}" onclick="setCat('${c.replaceAll("'","&#39;")}')">${c}</button>`).join('');
-}
-function setCat(c){activeCat=c;drawTabs();drawMenu()}
+const itemHtml=x=>`<div class="mItem"><b>${x.name}</b><span class="price">${V(x.price)}</span></div>`;
 function drawMenu(){
-  const list=activeCat==='Tất cả'?menuData:menuData.filter(x=>x.cat===activeCat);
-  menuGrid.innerHTML=list.length?list.map(x=>`<div class="mItem"><b>${x.name}</b><span class="price">${V(x.price)}</span></div>`).join(''):'<div class="menuEmpty">Chưa có món nào.</div>';
+  const food=menuData.filter(x=>x.cat!=='Đồ uống');
+  const drink=menuData.filter(x=>x.cat==='Đồ uống');
+  menuGridFood.innerHTML=food.length?food.map(itemHtml).join(''):'<div class="menuEmpty">Chưa có món nào.</div>';
+  menuGridDrink.innerHTML=drink.length?drink.map(itemHtml).join(''):'<div class="menuEmpty">Chưa có đồ uống nào.</div>';
 }
 loadMenu();
 </script>
