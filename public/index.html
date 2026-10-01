@@ -46,6 +46,11 @@ section{padding:56px 0}
 .menu-group-title{font-size:19px;color:var(--brown2);margin:0 0 16px}
 .menu-group-title:not(:first-of-type){margin-top:36px}
 .menuGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.priceGroups{background:#fff;border:1px solid var(--line);border-radius:16px;padding:6px 22px}
+.priceGroup{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:18px 0;border-bottom:1px dashed var(--line)}
+.priceGroup:last-child{border-bottom:0}
+.priceGroup .names{font-weight:700;font-size:16px;line-height:1.6}
+.priceGroup .tier-price{font-size:24px;font-weight:800;color:var(--green);white-space:nowrap}
 .mItem{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .mItem b{display:block;font-size:16px}
 .mItem .price{color:var(--red);font-weight:800;font-size:17px;white-space:nowrap}
@@ -53,7 +58,7 @@ section{padding:56px 0}
 
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
 .gallery .ph{aspect-ratio:1;border-radius:14px;background:linear-gradient(135deg,#fde3c4,#f7b36b);display:flex;align-items:center;justify-content:center;font-size:40px;border:1px solid var(--line)}
-.gallery .ph img{width:100%;height:100%;object-fit:cover;border-radius:14px}
+.gallery .ph img{width:100%;height:100%;object-fit:contain;border-radius:14px;background:#fff}
 
 .contact{display:grid;grid-template-columns:1fr 1fr;gap:30px}
 .contact .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px}
@@ -122,7 +127,7 @@ footer b{color:#fff}
     <h2 class="section-title">Menu</h2>
     <p class="section-sub">Giá niêm yết, cập nhật trực tiếp từ hệ thống quản lý của quán.</p>
     <h3 class="menu-group-title">🍜 Món ăn</h3>
-    <div class="menuGrid" id="menuGridFood"></div>
+    <div class="priceGroups" id="menuGroupsFood"></div>
     <h3 class="menu-group-title">🥤 Đồ uống</h3>
     <div class="menuGrid" id="menuGridDrink"></div>
   </div>
@@ -135,8 +140,8 @@ footer b{color:#fff}
     <div class="gallery">
       <div class="ph"><img src="/images/shop-front.jpg" alt="Mặt tiền quán Phở Bò Đăng Nhi" loading="lazy"></div>
       <div class="ph"><img src="/images/poster-bowl.jpg" alt="Tô phở bò Đăng Nhi" loading="lazy"></div>
-      <div class="ph">🥩</div>
-      <div class="ph">🌿</div>
+      <div class="ph"><img src="/images/menu-food-poster.webp" alt="Bảng giá món ăn" loading="lazy"></div>
+      <div class="ph"><img src="/images/menu-drink-poster.webp" alt="Bảng giá đồ uống" loading="lazy"></div>
     </div>
   </div>
 </section>
@@ -177,14 +182,20 @@ async function loadMenu(){
     menuData=await r.json();
     drawMenu();
   }catch(e){
-    menuGridFood.innerHTML=menuGridDrink.innerHTML='<div class="menuEmpty">Không tải được menu, vui lòng thử lại sau.</div>';
+    menuGroupsFood.innerHTML=menuGridDrink.innerHTML='<div class="menuEmpty">Không tải được menu, vui lòng thử lại sau.</div>';
   }
 }
 const itemHtml=x=>`<div class="mItem"><b>${x.name}</b><span class="price">${V(x.price)}</span></div>`;
+function groupByPrice(items){
+  const map=new Map();
+  for (const x of items){ if (!map.has(x.price)) map.set(x.price,[]); map.get(x.price).push(x.name); }
+  return [...map.entries()].sort((a,b)=>a[0]-b[0]);
+}
 function drawMenu(){
   const food=menuData.filter(x=>x.cat!=='Đồ uống');
   const drink=menuData.filter(x=>x.cat==='Đồ uống');
-  menuGridFood.innerHTML=food.length?food.map(itemHtml).join(''):'<div class="menuEmpty">Chưa có món nào.</div>';
+  const groups=groupByPrice(food);
+  menuGroupsFood.innerHTML=groups.length?groups.map(([price,names])=>`<div class="priceGroup"><div class="names">${names.join(', ')}</div><div class="tier-price">${V(price)}</div></div>`).join(''):'<div class="menuEmpty">Chưa có món nào.</div>';
   menuGridDrink.innerHTML=drink.length?drink.map(itemHtml).join(''):'<div class="menuEmpty">Chưa có đồ uống nào.</div>';
 }
 loadMenu();
