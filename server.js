@@ -148,6 +148,13 @@ app.post('/api/change-password', requireAuth, async (req,res)=>{
   } catch(e){res.status(500).json({error:e.message});}
 });
 
+app.get('/api/public/menu', async (_req,res)=>{
+  try {
+    const menu = await col('menu').find({active:true}).sort({cat:1,id:1}).project({_id:0,id:1,name:1,price:1,cat:1}).toArray();
+    res.json(menu);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
 app.get('/api/state', requireAuth, async (_req,res)=>{
   try {
     const [menu,tables,kitchen,invoices,settings,inventory,stockIns,expenseTypes,expenses] = await Promise.all([
@@ -291,8 +298,8 @@ app.post('/api/invoice', requireAuth, async (req,res)=>{
   } catch(e){res.status(500).json({error:e.message});}
 });
 
-app.get('/{*splat}', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get('/pos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'pos.html'));
 });
 
 const port=Number(process.env.PORT||3000);
