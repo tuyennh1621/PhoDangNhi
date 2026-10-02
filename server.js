@@ -105,6 +105,7 @@ async function connect(){
   await db.collection('stockins').createIndex({ id: 1 }, { unique: true });
   await db.collection('expensetypes').createIndex({ id: 1 }, { unique: true });
   await db.collection('expenses').createIndex({ id: 1 }, { unique: true });
+  await db.collection('menuimages').createIndex({ id: 1 }, { unique: true });
   await db.collection('users').createIndex({ id: 1 }, { unique: true });
   await db.collection('users').createIndex({ username: 1 }, { unique: true });
   if (!(await db.collection('menu').countDocuments())) await db.collection('menu').insertMany(DEFAULT_MENU);
@@ -152,6 +153,29 @@ app.get('/api/public/menu', async (_req,res)=>{
   try {
     const menu = await col('menu').find({active:true}).sort({cat:1,id:1}).project({_id:0,id:1,name:1,price:1,cat:1,img:1}).toArray();
     res.json(menu);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+app.get('/api/menu-image/:id', async (req,res)=>{
+  try {
+    const doc = await col('menuimages').findOne({id:Number(req.params.id)});
+    if (!doc) return res.status(404).end();
+    res.set('Content-Type', doc.type).set('Cache-Control','public, max-age=86400').send(Buffer.from(doc.data.buffer));
+  } catch(e){ res.status(500).end(); }
+});
+
+app.post('/api/menu/:id/image', requireAdmin, async (req,res)=>{
+  try {
+    const id = Number(req.params.id);
+    const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(String(req.body?.data||''));
+    if (!m) return res.status(400).json({error:'Ảnh không hợp lệ'});
+    const buf = Buffer.from(m[2], 'base64');
+    if (buf.length > 600*1024) return res.status(413).json({error:'Ảnh quá lớn'});
+    if (!(await col('menu').findOne({id}))) return res.status(404).json({error:'Món không tồn tại'});
+    await col('menuimages').updateOne({id},{$set:{type:m[1],data:buf,updatedAt:new Date()}},{upsert:true});
+    const img = `/api/menu-image/${id}?v=${Date.now()}`;
+    await col('menu').updateOne({id},{$set:{img}});
+    res.json({img});
   } catch(e){ res.status(500).json({error:e.message}); }
 });
 
