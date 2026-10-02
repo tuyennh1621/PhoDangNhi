@@ -150,7 +150,7 @@ app.post('/api/change-password', requireAuth, async (req,res)=>{
 
 app.get('/api/public/menu', async (_req,res)=>{
   try {
-    const menu = await col('menu').find({active:true}).sort({cat:1,id:1}).project({_id:0,id:1,name:1,price:1,cat:1}).toArray();
+    const menu = await col('menu').find({active:true}).sort({cat:1,id:1}).project({_id:0,id:1,name:1,price:1,cat:1,img:1}).toArray();
     res.json(menu);
   } catch(e){ res.status(500).json({error:e.message}); }
 });
@@ -176,7 +176,7 @@ app.put('/api/menu', requireAdmin, async (req,res)=>{
   try {
     const items = Array.isArray(req.body) ? req.body : [];
     if (!items.length) return res.status(400).json({error:'Menu cannot be empty'});
-    const ops = items.map(x=>({updateOne:{filter:{id:x.id},update:{$set:{name:x.name,price:Number(x.price),cat:x.cat,active:!!x.active}},upsert:true}}));
+    const ops = items.map(x=>({updateOne:{filter:{id:x.id},update:{$set:{name:x.name,price:Number(x.price),cat:x.cat,active:!!x.active,...(typeof x.img==='string'?{img:x.img}:{})}},upsert:true}}));
     await col('menu').bulkWrite(ops);
     await col('menu').deleteMany({id:{$nin:items.map(x=>x.id)}});
     res.json({ok:true});

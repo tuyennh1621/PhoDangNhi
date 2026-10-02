@@ -49,7 +49,10 @@ section{padding:56px 0}
 .priceZone{margin-bottom:22px}
 .priceZone:last-child{margin-bottom:0}
 .priceZone .zoneLabel{font-size:13px;font-weight:700;color:var(--green);letter-spacing:.04em;text-transform:uppercase;margin:0 0 10px}
-.mItem{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mItem{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.mItem .thumb{aspect-ratio:3/2;background:linear-gradient(135deg,#fde3c4,#f7b36b);display:flex;align-items:center;justify-content:center;font-size:38px}
+.mItem .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.mItem .info{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px}
 .mItem b{display:block;font-size:16px}
 .mItem .price{color:var(--red);font-weight:800;font-size:17px;white-space:nowrap}
 .menuEmpty{text-align:center;color:var(--muted);padding:30px}
@@ -183,7 +186,7 @@ async function loadMenu(){
     menuGroupsFood.innerHTML=menuGridDrink.innerHTML='<div class="menuEmpty">Không tải được menu, vui lòng thử lại sau.</div>';
   }
 }
-const itemHtml=x=>`<div class="mItem"><b>${x.name}</b><span class="price">${V(x.price)}</span></div>`;
+const itemHtml=x=>`<div class="mItem"><div class="thumb">${x.img?`<img src="${x.img}" alt="${x.name}" loading="lazy">`:(x.cat==='Đồ uống'?'🥤':'🍜')}</div><div class="info"><b>${x.name}</b><span class="price">${V(x.price)}</span></div></div>`;
 function groupByPrice(items){
   const map=new Map();
   for (const x of items){ if (!map.has(x.price)) map.set(x.price,[]); map.get(x.price).push(x); }
