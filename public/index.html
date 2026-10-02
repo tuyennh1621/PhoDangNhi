@@ -46,11 +46,9 @@ section{padding:56px 0}
 .menu-group-title{font-size:19px;color:var(--brown2);margin:0 0 16px}
 .menu-group-title:not(:first-of-type){margin-top:36px}
 .menuGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
-.priceGroups{background:#fff;border:1px solid var(--line);border-radius:16px;padding:6px 22px}
-.priceGroup{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:18px 0;border-bottom:1px dashed var(--line)}
-.priceGroup:last-child{border-bottom:0}
-.priceGroup .names{font-weight:700;font-size:16px;line-height:1.6}
-.priceGroup .tier-price{font-size:24px;font-weight:800;color:var(--green);white-space:nowrap}
+.priceZone{margin-bottom:22px}
+.priceZone:last-child{margin-bottom:0}
+.priceZone .zoneLabel{font-size:13px;font-weight:700;color:var(--green);letter-spacing:.04em;text-transform:uppercase;margin:0 0 10px}
 .mItem{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .mItem b{display:block;font-size:16px}
 .mItem .price{color:var(--red);font-weight:800;font-size:17px;white-space:nowrap}
@@ -127,7 +125,7 @@ footer b{color:#fff}
     <h2 class="section-title">Menu</h2>
     <p class="section-sub">Giá niêm yết, cập nhật trực tiếp từ hệ thống quản lý của quán.</p>
     <h3 class="menu-group-title">🍜 Món ăn</h3>
-    <div class="priceGroups" id="menuGroupsFood"></div>
+    <div id="menuGroupsFood"></div>
     <h3 class="menu-group-title">🥤 Đồ uống</h3>
     <div class="menuGrid" id="menuGridDrink"></div>
   </div>
@@ -188,14 +186,14 @@ async function loadMenu(){
 const itemHtml=x=>`<div class="mItem"><b>${x.name}</b><span class="price">${V(x.price)}</span></div>`;
 function groupByPrice(items){
   const map=new Map();
-  for (const x of items){ if (!map.has(x.price)) map.set(x.price,[]); map.get(x.price).push(x.name); }
+  for (const x of items){ if (!map.has(x.price)) map.set(x.price,[]); map.get(x.price).push(x); }
   return [...map.entries()].sort((a,b)=>a[0]-b[0]);
 }
 function drawMenu(){
   const food=menuData.filter(x=>x.cat!=='Đồ uống');
   const drink=menuData.filter(x=>x.cat==='Đồ uống');
   const groups=groupByPrice(food);
-  menuGroupsFood.innerHTML=groups.length?groups.map(([price,names])=>`<div class="priceGroup"><div class="names">${names.join(', ')}</div><div class="tier-price">${V(price)}</div></div>`).join(''):'<div class="menuEmpty">Chưa có món nào.</div>';
+  menuGroupsFood.innerHTML=groups.length?groups.map(([price,items])=>`<div class="priceZone"><div class="zoneLabel">Đồng giá ${V(price)}</div><div class="menuGrid">${items.map(itemHtml).join('')}</div></div>`).join(''):'<div class="menuEmpty">Chưa có món nào.</div>';
   menuGridDrink.innerHTML=drink.length?drink.map(itemHtml).join(''):'<div class="menuEmpty">Chưa có đồ uống nào.</div>';
 }
 loadMenu();
