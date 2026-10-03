@@ -72,6 +72,7 @@ h1,h2,h3{margin-top:0}.hint{color:var(--muted)}.topbar{display:flex;justify-cont
     <button data-admin="1" onclick="go('tableAdmin',this)">🧷 Quản lý bàn</button>
     <button data-admin="1" onclick="go('inventoryAdmin',this)">📦 Quản lý kho</button>
     <button data-admin="1" onclick="go('expenseAdmin',this)">💸 Chi phí cố định</button>
+    <button data-admin="1" onclick="go('newsAdmin',this)">📰 Tin tức</button>
   </nav>
   <div class="nav-sep"></div>
   <div class="accountBox">
@@ -143,7 +144,31 @@ h1,h2,h3{margin-top:0}.hint{color:var(--muted)}.topbar{display:flex;justify-cont
   <h3 style="margin-top:24px">Lịch sử chi phí</h3>
   <div class="table-wrap"><table><thead><tr><th>Mã</th><th>Tháng</th><th>Loại chi phí</th><th>Số tiền</th><th>Ghi chú</th></tr></thead><tbody id="expenseRows"></tbody></table></div>
 </section>
+
+<section id="newsAdmin" class="view">
+  <div class="topbar"><div><h1>Quản lý tin tức</h1><p class="hint">Bài đăng hiển thị ở mục Tin tức trên trang chủ cho khách. Bài đang ẩn sẽ không hiện ra ngoài.</p></div><button class="btn primary" onclick="openNewsModal()">＋ Viết tin mới</button></div>
+  <div class="table-wrap"><table><thead><tr><th></th><th>Tiêu đề</th><th>Ngày đăng</th><th>Trạng thái</th><th></th></tr></thead><tbody id="newsRows"></tbody></table></div>
+</section>
 </main>
+</div>
+
+<div id="newsModal" class="modal">
+ <div class="modalbox"><div class="modalhead"><h2 id="newsModalTitle">Viết tin mới</h2><button class="close" onclick="closeModal('newsModal')">×</button></div>
+ <div class="formgrid">
+  <div class="field full"><label>Tiêu đề</label><input id="nTitle" maxlength="200"></div>
+  <div class="field full"><label>Mô tả ngắn (hiện trên thẻ tin)</label><input id="nSummary" maxlength="400"></div>
+  <div class="field full"><label>Nội dung</label><textarea id="nContent" rows="8" maxlength="20000" style="width:100%;resize:vertical"></textarea></div>
+  <div class="field full"><label>Ảnh bìa</label>
+   <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <img id="nImgPreview" alt="" style="width:120px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#f5ece4;display:none">
+    <input id="nImg" type="file" accept="image/jpeg,image/png,image/webp" onchange="pickNewsImage(this)">
+    <button id="nImgRemove" type="button" class="btn danger" style="display:none" onclick="removeNewsImage()">Bỏ ảnh</button>
+   </div>
+  </div>
+  <div class="field full"><label><input id="nPublished" type="checkbox" checked> Hiển thị trên trang chủ</label></div>
+ </div>
+ <div class="modal-actions"><button class="btn" onclick="closeModal('newsModal')">Hủy</button><button class="btn primary" onclick="saveNews()">Lưu tin</button></div>
+ </div>
 </div>
 
 <div id="checkoutModal" class="modal">
@@ -250,8 +275,8 @@ async function submitChangePassword(){try{await api('/api/change-password',{meth
 const msg=x=>{toast.textContent=x;toast.className='toast show';setTimeout(()=>toast.className='toast',2200)};
 async function syncTable(){if(!table())return;await api('/api/table/'+selected,{method:'PUT',body:JSON.stringify({draft:table().draft,sent:table().sent})})}
 function go(v,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById(v).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');drawAll()}
-function goByName(v){const buttons=[...document.querySelectorAll('nav button')];const map=['tables','pos','kitchen','sales','invoices','menuAdmin','tableAdmin','inventoryAdmin','expenseAdmin'];go(v,buttons[map.indexOf(v)])}
-function drawAll(){if(!state)return;drawTables();drawMenuFilters();drawMenu();drawOrder();drawKitchen();drawSales();drawInvoices();drawMenuAdmin();drawTableAdmin();drawInventory();drawExpenseAdmin()}
+function goByName(v){const buttons=[...document.querySelectorAll('nav button')];const map=['tables','pos','kitchen','sales','invoices','menuAdmin','tableAdmin','inventoryAdmin','expenseAdmin','newsAdmin'];go(v,buttons[map.indexOf(v)])}
+function drawAll(){if(!state)return;drawTables();drawMenuFilters();drawMenu();drawOrder();drawKitchen();drawSales();drawInvoices();drawMenuAdmin();drawTableAdmin();drawInventory();drawExpenseAdmin();drawNewsAdmin()}
 function drawTables(){tablegrid.innerHTML=state.tables.map(o=>{const allItems=[...o.sent.flatMap(x=>x.items),...o.draft],sum=allItems.reduce((s,i)=>s+(itemById(i.i)?.price||0)*i.q,0),ready=o.sent.some(x=>x.status==='ready'),busy=o.sent.length+o.draft.length;return `<button class="table ${ready?'ready':busy?'busy':''}" onclick="pick(${o.id})"><div class="table-head"><b>Bàn ${String(o.id).padStart(2,'0')}</b><span class="badge ${ready?'ready':busy?'busy':'free'}">${ready?'Món xong':busy?'Đang phục vụ':'Trống'}</span></div><div style="margin-top:14px">${busy?`<b>${V(sum)}</b><div class="small">${o.sent.length} đơn bếp · ${allItems.reduce((s,i)=>s+i.q,0)} món</div>`:'Sẵn sàng order'}</div></button>`}).join('')}
 function pick(id){selected=id;tabletag.textContent='Bàn '+String(id).padStart(2,'0');goByName('pos')}
 async function addTable(){const t=await api('/api/tables',{method:'POST'});state.tables.push(t);drawAll();msg('Đã thêm bàn '+String(t.id).padStart(2,'0'))}
@@ -296,6 +321,16 @@ async function saveExpenseType(){const name=etName.value.trim(),amount=Number(et
 async function removeExpenseType(id){if(!confirm('Xóa loại chi phí này?'))return;state.expenseTypes=state.expenseTypes.filter(x=>x.id!==id);await api('/api/expense-types',{method:'PUT',body:JSON.stringify(state.expenseTypes)});await load();msg('Đã xóa loại chi phí')}
 function openExpenseEntryModal(id){expenseEntryTargetId=id;const x=expenseTypeById(id);expenseEntryInfo.textContent=`Ghi nhận chi phí: ${x.name}`;expenseMonth.value=currentMonth();expenseAmount.value=x.amount;expenseNote.value='';expenseEntryModal.classList.add('show')}
 async function confirmExpenseEntry(){const amount=Number(expenseAmount.value),month=expenseMonth.value,note=expenseNote.value.trim();if(!amount||amount<=0)return msg('Nhập số tiền hợp lệ');if(!month)return msg('Chọn tháng ghi nhận');const r=await api('/api/expenses',{method:'POST',body:JSON.stringify({typeId:expenseEntryTargetId,amount,month,note})});closeModal('expenseEntryModal');await load();msg('Đã ghi nhận '+r.id)}
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let editingNewsId=null,newsImageData=null,newsRemoveImage=false;
+function drawNewsAdmin(){const list=state.news||[];newsRows.innerHTML=list.length?list.map(x=>`<tr><td>${x.img?`<img src="${x.img}" alt="" style="width:64px;height:42px;object-fit:cover;border-radius:6px;display:block">`:'<span class="muted">—</span>'}</td><td style="white-space:normal;min-width:220px"><b>${esc(x.title)}</b><div class="small">${esc(x.summary)}</div></td><td>${new Date(x.createdAt).toLocaleDateString('vi-VN')}</td><td>${x.published?'Đang hiển thị':'Đang ẩn'}</td><td><button class="btn" onclick="openNewsModal(${x.id})">Sửa</button> <button class="btn ${x.published?'danger':''}" onclick="toggleNews(${x.id})">${x.published?'Ẩn':'Hiện'}</button> <button class="btn danger" onclick="deleteNews(${x.id})">Xóa</button></td></tr>`).join(''):'<tr><td colspan="5"><div class="empty">Chưa có tin nào. Bấm "Viết tin mới" để đăng bài đầu tiên.</div></td></tr>'}
+function setNewsPreview(src){nImgPreview.src=src||'';nImgPreview.style.display=src?'block':'none';nImgRemove.style.display=src?'inline-block':'none'}
+async function openNewsModal(id=null){editingNewsId=id;newsImageData=null;newsRemoveImage=false;nImg.value='';let x={title:'',summary:'',content:'',img:'',published:true};if(id){try{x=await api('/api/news/'+id)}catch(e){return msg(e.message)}}newsModalTitle.textContent=id?'Sửa tin':'Viết tin mới';nTitle.value=x.title;nSummary.value=x.summary;nContent.value=x.content;nPublished.checked=x.published;setNewsPreview(x.img);newsModal.classList.add('show')}
+function pickNewsImage(input){const f=input.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const max=900,s=Math.min(1,max/img.width),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);newsImageData=c.toDataURL('image/jpeg',.85);newsRemoveImage=false;setNewsPreview(newsImageData)};img.onerror=()=>msg('Không đọc được ảnh');img.src=reader.result};reader.readAsDataURL(f)}
+function removeNewsImage(){newsImageData=null;newsRemoveImage=true;nImg.value='';setNewsPreview('')}
+async function saveNews(){const title=nTitle.value.trim();if(!title)return msg('Nhập tiêu đề tin');const body={title,summary:nSummary.value,content:nContent.value,published:nPublished.checked};if(newsImageData)body.imageData=newsImageData;if(newsRemoveImage)body.removeImage=true;try{const r=await api(editingNewsId?'/api/news/'+editingNewsId:'/api/news',{method:editingNewsId?'PUT':'POST',body:JSON.stringify(body)});closeModal('newsModal');await load();msg(r.warning?'Đã lưu tin nhưng ảnh lỗi: '+r.warning:'Đã lưu tin')}catch(e){msg(e.message)}}
+async function toggleNews(id){const x=state.news.find(n=>n.id===id);if(!x)return;try{const full=await api('/api/news/'+id);await api('/api/news/'+id,{method:'PUT',body:JSON.stringify({title:full.title,summary:full.summary,content:full.content,published:!full.published})});await load();msg(full.published?'Đã ẩn tin':'Đã hiển thị tin')}catch(e){msg(e.message)}}
+async function deleteNews(id){if(!confirm('Xóa tin này? Không thể khôi phục.'))return;try{await api('/api/news/'+id,{method:'DELETE'});await load();msg('Đã xóa tin')}catch(e){msg(e.message)}}
 checkAuth().catch(e=>{console.error(e);alert('Không kết nối được backend MongoDB: '+e.message)});
 </script>
 </body>

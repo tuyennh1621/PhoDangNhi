@@ -73,6 +73,24 @@ section{padding:56px 0}
 footer{background:var(--brown);color:#cbb39f;padding:30px 0;text-align:center;font-size:13px}
 footer b{color:#fff}
 
+.newsGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.newsCard{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;padding:0;font:inherit;color:inherit}
+.newsCard:hover{border-color:#d97434;box-shadow:0 4px 16px #6d3d1b18}
+.newsCard .nthumb{aspect-ratio:16/10;background:linear-gradient(135deg,#fde3c4,#f7b36b);display:flex;align-items:center;justify-content:center;font-size:40px}
+.newsCard .nthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.newsCard .nbody{padding:16px;display:flex;flex-direction:column;gap:6px}
+.newsCard .ndate{font-size:12px;color:var(--muted)}
+.newsCard h3{margin:0;font-size:17px;line-height:1.4}
+.newsCard p{margin:0;color:var(--muted);font-size:14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.newsModal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+.newsModal.show{display:flex}
+.newsBox{background:#fff;border-radius:16px;max-width:680px;width:100%;max-height:90vh;overflow:auto;position:relative}
+.newsBox img{width:100%;max-height:340px;object-fit:cover;display:block}
+.newsBody{padding:24px}
+.newsBody h3{margin:4px 0 14px;font-size:22px;line-height:1.35}
+.newsDate{font-size:13px;color:var(--muted)}
+.newsText{white-space:pre-wrap;line-height:1.7}
+.newsClose{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:0;background:#fffe;font-size:20px;cursor:pointer;z-index:1}
 @media(max-width:860px){
   nav{display:none}
   .about{grid-template-columns:1fr}
@@ -87,6 +105,7 @@ footer b{color:#fff}
     <div class="brand"><img src="/logo.png" alt="Phở Bò Đăng Nhi"><b>Phở Bò Đăng Nhi</b></div>
     <nav>
       <a href="#about">Giới thiệu</a>
+      <a href="#news" id="navNews" style="display:none">Tin tức</a>
       <a href="#menu">Menu</a>
       <a href="#gallery">Hình ảnh</a>
       <a href="#contact">Liên hệ</a>
@@ -122,6 +141,26 @@ footer b{color:#fff}
     </div>
   </div>
 </section>
+
+<section id="news" style="display:none">
+  <div class="wrap">
+    <h2 class="section-title">Tin tức</h2>
+    <p class="section-sub">Thông tin mới nhất từ Phở Bò Đăng Nhi.</p>
+    <div class="newsGrid" id="newsGrid"></div>
+  </div>
+</section>
+
+<div class="newsModal" id="newsModal" onclick="if(event.target===this)closeNews()">
+  <div class="newsBox">
+    <button class="newsClose" onclick="closeNews()" aria-label="Đóng">×</button>
+    <img id="newsModalImg" alt="" style="display:none">
+    <div class="newsBody">
+      <div class="newsDate" id="newsModalDate"></div>
+      <h3 id="newsModalTitle"></h3>
+      <div class="newsText" id="newsModalText"></div>
+    </div>
+  </div>
+</div>
 
 <section id="menu" style="background:#fff">
   <div class="wrap">
@@ -200,6 +239,31 @@ function drawMenu(){
   menuGridDrink.innerHTML=drink.length?drink.map(itemHtml).join(''):'<div class="menuEmpty">Chưa có đồ uống nào.</div>';
 }
 loadMenu();
+
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let newsData=[];
+const fmtDate=d=>new Date(d).toLocaleDateString('vi-VN');
+async function loadNews(){
+  try{
+    newsData=await (await fetch('/api/public/news')).json();
+    if(!newsData.length) return;
+    news.style.display='';
+    navNews.style.display='';
+    newsGrid.innerHTML=newsData.map(n=>`<button class="newsCard" onclick="openNews(${n.id})"><div class="nthumb">${n.img?`<img src="${esc(n.img)}" alt="" loading="lazy">`:'📰'}</div><div class="nbody"><span class="ndate">${fmtDate(n.createdAt)}</span><h3>${esc(n.title)}</h3>${n.summary?`<p>${esc(n.summary)}</p>`:''}</div></button>`).join('');
+  }catch(e){}
+}
+function openNews(id){
+  const n=newsData.find(x=>x.id===id); if(!n) return;
+  newsModalImg.style.display=n.img?'block':'none';
+  newsModalImg.src=n.img||'';
+  newsModalDate.textContent=fmtDate(n.createdAt);
+  newsModalTitle.textContent=n.title;
+  newsModalText.textContent=n.content||n.summary||'';
+  newsModal.classList.add('show');
+}
+function closeNews(){newsModal.classList.remove('show')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeNews()});
+loadNews();
 </script>
 </body>
 </html>

@@ -106,6 +106,8 @@ async function connect(){
   await db.collection('expensetypes').createIndex({ id: 1 }, { unique: true });
   await db.collection('expenses').createIndex({ id: 1 }, { unique: true });
   await db.collection('menuimages').createIndex({ id: 1 }, { unique: true });
+  await db.collection('news').createIndex({ id: 1 }, { unique: true });
+  await db.collection('newsimages').createIndex({ id: 1 }, { unique: true });
   await db.collection('users').createIndex({ id: 1 }, { unique: true });
   await db.collection('users').createIndex({ username: 1 }, { unique: true });
   if (!(await db.collection('menu').countDocuments())) await db.collection('menu').insertMany(DEFAULT_MENU);
@@ -179,9 +181,97 @@ app.post('/api/menu/:id/image', requireAdmin, async (req,res)=>{
   } catch(e){ res.status(500).json({error:e.message}); }
 });
 
+const IMG_RE = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/;
+const parseImage = data => {
+  const m = IMG_RE.exec(String(data||''));
+  if (!m) return null;
+  const buf = Buffer.from(m[2], 'base64');
+  return buf.length > 600*1024 ? 'big' : { type: m[1], buf };
+};
+const newsFields = b => ({
+  title: String(b.title||'').trim().slice(0,200),
+  summary: String(b.summary||'').trim().slice(0,400),
+  content: String(b.content||'').trim().slice(0,20000),
+  published: !!b.published
+});
+async function applyNewsImage(id, body) {
+  if (body.removeImage) {
+    await col('newsimages').deleteOne({id});
+    await col('news').updateOne({id},{$set:{img:''}});
+    return null;
+  }
+  if (!body.imageData) return null;
+  const img = parseImage(body.imageData);
+  if (img === 'big') return 'Ảnh quá lớn';
+  if (!img) return 'Ảnh không hợp lệ';
+  await col('newsimages').updateOne({id},{$set:{type:img.type,data:img.buf,updatedAt:new Date()}},{upsert:true});
+  await col('news').updateOne({id},{$set:{img:`/api/news-image/${id}?v=${Date.now()}`}});
+  return null;
+}
+
+app.get('/api/public/news', async (_req,res)=>{
+  try {
+    const list = await col('news').find({published:true}).sort({createdAt:-1}).limit(30).project({_id:0,id:1,title:1,summary:1,content:1,img:1,createdAt:1}).toArray();
+    res.json(list);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+app.get('/api/news-image/:id', async (req,res)=>{
+  try {
+    const doc = await col('newsimages').findOne({id:Number(req.params.id)});
+    if (!doc) return res.status(404).end();
+    res.set('Content-Type', doc.type).set('Cache-Control','public, max-age=86400').send(Buffer.from(doc.data.buffer));
+  } catch(e){ res.status(500).end(); }
+});
+
+app.get('/api/news/:id', requireAdmin, async (req,res)=>{
+  try {
+    const doc = await col('news').findOne({id:Number(req.params.id)},{projection:{_id:0}});
+    if (!doc) return res.status(404).json({error:'Tin không tồn tại'});
+    res.json(doc);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/news', requireAdmin, async (req,res)=>{
+  try {
+    const f = newsFields(req.body||{});
+    if (!f.title) return res.status(400).json({error:'Nhập tiêu đề tin'});
+    const last = await col('news').find().sort({id:-1}).limit(1).toArray();
+    const id = (last[0]?.id||0)+1;
+    const now = new Date();
+    await col('news').insertOne({id,...f,img:'',createdAt:now,updatedAt:now});
+    const imgErr = await applyNewsImage(id, req.body);
+    const doc = await col('news').findOne({id},{projection:{_id:0}});
+    res.json(imgErr ? {...doc,warning:imgErr} : doc);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+app.put('/api/news/:id', requireAdmin, async (req,res)=>{
+  try {
+    const id = Number(req.params.id);
+    if (!(await col('news').findOne({id}))) return res.status(404).json({error:'Tin không tồn tại'});
+    const f = newsFields(req.body||{});
+    if (!f.title) return res.status(400).json({error:'Nhập tiêu đề tin'});
+    await col('news').updateOne({id},{$set:{...f,updatedAt:new Date()}});
+    const imgErr = await applyNewsImage(id, req.body);
+    const doc = await col('news').findOne({id},{projection:{_id:0}});
+    res.json(imgErr ? {...doc,warning:imgErr} : doc);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+app.delete('/api/news/:id', requireAdmin, async (req,res)=>{
+  try {
+    const id = Number(req.params.id);
+    const r = await col('news').deleteOne({id});
+    if (!r.deletedCount) return res.status(404).json({error:'Tin không tồn tại'});
+    await col('newsimages').deleteOne({id});
+    res.json({ok:true});
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
 app.get('/api/state', requireAuth, async (_req,res)=>{
   try {
-    const [menu,tables,kitchen,invoices,settings,inventory,stockIns,expenseTypes,expenses] = await Promise.all([
+    const [menu,tables,kitchen,invoices,settings,inventory,stockIns,expenseTypes,expenses,news] = await Promise.all([
       col('menu').find({}).sort({id:1}).toArray(),
       col('tables').find({}).sort({id:1}).toArray(),
       col('orders').find({}).sort({createdAt:1}).toArray(),
@@ -190,9 +280,10 @@ app.get('/api/state', requireAuth, async (_req,res)=>{
       col('inventory').find({}).sort({id:1}).toArray(),
       col('stockins').find({}).sort({time:-1}).toArray(),
       col('expensetypes').find({}).sort({id:1}).toArray(),
-      col('expenses').find({}).sort({time:-1}).toArray()
+      col('expenses').find({}).sort({time:-1}).toArray(),
+      col('news').find({}).sort({createdAt:-1}).project({content:0}).toArray()
     ]);
-    res.json({menu,tables,kitchen,invoices,inventory,stockIns,expenseTypes,expenses,seq:settings?.seq||101,invoiceSeq:settings?.invoiceSeq||1});
+    res.json({menu,tables,kitchen,invoices,inventory,stockIns,expenseTypes,expenses,news,seq:settings?.seq||101,invoiceSeq:settings?.invoiceSeq||1});
   } catch(e){ res.status(500).json({error:e.message}); }
 });
 
@@ -324,6 +415,11 @@ app.post('/api/invoice', requireAuth, async (req,res)=>{
 
 app.get('/pos', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'pos.html'));
+});
+
+app.use((err, _req, res, _next) => {
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({ error: status === 400 ? 'Dữ liệu gửi lên không hợp lệ' : status === 413 ? 'Dữ liệu quá lớn' : 'Lỗi máy chủ' });
 });
 
 const port=Number(process.env.PORT||3000);
