@@ -77,7 +77,7 @@ footer b{color:#fff}
 .newsCard{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;padding:0;font:inherit;color:inherit}
 .newsCard:hover{border-color:#d97434;box-shadow:0 4px 16px #6d3d1b18}
 .newsCard .nthumb{aspect-ratio:16/10;background:linear-gradient(135deg,#fde3c4,#f7b36b);display:flex;align-items:center;justify-content:center;font-size:40px}
-.newsCard .nthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.newsCard .nthumb img{width:100%;height:100%;object-fit:contain;background:#f5ece4;display:block}
 .newsCard .nbody{padding:16px;display:flex;flex-direction:column;gap:6px}
 .newsCard .ndate{font-size:12px;color:var(--muted)}
 .newsCard h3{margin:0;font-size:17px;line-height:1.4}
@@ -85,7 +85,7 @@ footer b{color:#fff}
 .newsModal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
 .newsModal.show{display:flex}
 .newsBox{background:#fff;border-radius:16px;max-width:680px;width:100%;max-height:90vh;overflow:auto;position:relative}
-.newsBox img{width:100%;max-height:340px;object-fit:cover;display:block}
+.newsBox img{width:100%;height:450px;max-height:60vh;object-fit:contain;background:#f5ece4;display:block}
 .newsBody{padding:24px}
 .newsBody h3{margin:4px 0 14px;font-size:22px;line-height:1.35}
 .newsDate{font-size:13px;color:var(--muted)}
